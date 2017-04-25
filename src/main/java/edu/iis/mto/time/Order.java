@@ -18,11 +18,6 @@ public class Order {
 		systemTime = new SystemTime();
 	}
 
-	public Order(TimeSource systemTime) {
-		orderState = State.CREATED;
-		this.systemTime = systemTime;
-	}
-
 	public void addItem(OrderItem item) {
 		requireState(State.CREATED, State.SUBMITTED);
 
@@ -35,13 +30,14 @@ public class Order {
 		requireState(State.CREATED);
 
 		orderState = State.SUBMITTED;
-		subbmitionDate = new DateTime();
+		subbmitionDate = new DateTime(systemTime.currentTimeMillis());
 
 	}
 
 	public void confirm() {
 		requireState(State.SUBMITTED);
-		int hoursElapsedAfterSubmittion = Hours.hoursBetween(subbmitionDate, new DateTime(systemTime.currentTimeMillis())).getHours();
+		int hoursElapsedAfterSubmittion = Hours
+				.hoursBetween(subbmitionDate, new DateTime(systemTime.currentTimeMillis())).getHours();
 		if (hoursElapsedAfterSubmittion > VALID_PERIOD_HOURS) {
 			orderState = State.CANCELLED;
 			throw new OrderExpiredException();
@@ -66,6 +62,10 @@ public class Order {
 		throw new OrderStateException("order should be in state " + allowedStates
 				+ " to perform required  operation, but is in " + orderState);
 
+	}
+
+	public void setSystemTime(TimeSource systemTime) {
+		this.systemTime = systemTime;
 	}
 
 	public static enum State {
