@@ -11,9 +11,16 @@ public class Order {
 	private State orderState;
 	private List<OrderItem> items = new ArrayList<OrderItem>();
 	private DateTime subbmitionDate;
+	private TimeSource systemTime;
 
 	public Order() {
 		orderState = State.CREATED;
+		systemTime = new SystemTime();
+	}
+
+	public Order(TimeSource systemTime) {
+		orderState = State.CREATED;
+		this.systemTime = systemTime;
 	}
 
 	public void addItem(OrderItem item) {
@@ -34,8 +41,8 @@ public class Order {
 
 	public void confirm() {
 		requireState(State.SUBMITTED);
-		int hoursElapsedAfterSubmittion = Hours.hoursBetween(subbmitionDate, new DateTime()).getHours();
-		if(hoursElapsedAfterSubmittion > VALID_PERIOD_HOURS){
+		int hoursElapsedAfterSubmittion = Hours.hoursBetween(subbmitionDate, new DateTime(systemTime.currentTimeMillis())).getHours();
+		if (hoursElapsedAfterSubmittion > VALID_PERIOD_HOURS) {
 			orderState = State.CANCELLED;
 			throw new OrderExpiredException();
 		}
@@ -49,16 +56,15 @@ public class Order {
 	State getOrderState() {
 		return orderState;
 	}
-	
+
 	private void requireState(State... allowedStates) {
 		for (State allowedState : allowedStates) {
 			if (orderState == allowedState)
 				return;
 		}
 
-		throw new OrderStateException("order should be in state "
-				+ allowedStates + " to perform required  operation, but is in "
-				+ orderState);
+		throw new OrderStateException("order should be in state " + allowedStates
+				+ " to perform required  operation, but is in " + orderState);
 
 	}
 
